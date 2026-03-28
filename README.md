@@ -4,7 +4,7 @@
 
 JAX officially supports NVIDIA and TPUs. AMD support exists but is scattered across GitHub issues, Gists, and forum posts with conflicting instructions. This guide consolidates everything that actually works, tested on RX 5700 XT / RX 6000 / RX 7000 series.
 
-> Proof that it works: see [`examples/chharmoney_demo.py (trading) + examples/composer_demo.py (audio)`](examples/chharmoney_demo.py (trading) + examples/composer_demo.py (audio)) — real models running on AMD GPU — quant trading math (Chharmoney) and audio (Composer).
+> Proof that it works: see [`examples/chharmoney_demo.py`](examples/chharmoney_demo.py) — a real quant trading engine (Chharmoney) running parallel backtests on AMD GPU with `vmap` + `grad` Sharpe optimization. Also [`examples/composer_demo.py`](examples/composer_demo.py) — audio/music transformer.
 
 ---
 
@@ -18,8 +18,9 @@ python scripts/test_jax_install.py
 python scripts/test_gpu_directml.py   # Windows
 python scripts/test_gpu_rocm.py       # Linux / WSL2
 
-# Step 3: Run the real model demo
-python examples/chharmoney_demo.py (trading) + examples/composer_demo.py (audio) --bench
+# Step 3: Run the real model demos
+python examples/chharmoney_demo.py --bench   # quant trading engine
+python examples/composer_demo.py --bench     # audio transformer
 ```
 
 ---
@@ -172,28 +173,30 @@ Everything works on CPU. Slower, but useful for development and testing.
 ```bash
 pip install jax jaxlib
 python scripts/test_jax_install.py
-python examples/chharmoney_demo.py (trading) + examples/composer_demo.py (audio)  # runs on CPU, all features work
+python examples/chharmoney_demo.py   # quant trading engine, runs on CPU
 ```
 
 ---
 
-## Chharmoney Demo
+## Chharmoney Demo (Quant Trading Engine)
 
-`examples/chharmoney_demo.py (trading) + examples/composer_demo.py (audio)` is a real transformer model (not toy code):
+`examples/chharmoney_demo.py` is a real quant trading engine — not toy code:
 
-- **Model**: 4-layer audio transformer, 256 dim, 4 heads
-- **Task**: Harmonic prediction — given a mel spectrogram, predict the next musical note
-- **Features demonstrated**: JIT compilation, `vmap` batching, `grad` for fine-tuning, XLA backend selection
+- **Chharmoney** = market trading math (JAX-native, GPU-parallel)
+- **10,000 strategies backtested in parallel** via `vmap` — what takes minutes on CPU runs in seconds on GPU
+- **Gradient-based Sharpe optimization** via `jax.grad` — optimize strategy parameters directly
+- **Causal transformer** for return prediction — attends only to past prices
+- **Composer** (`examples/composer_demo.py`) is the audio/music model — separate concern
 
 ```bash
-# Basic run
-python examples/chharmoney_demo.py (trading) + examples/composer_demo.py (audio)
+# Basic run — simulates 50-asset OHLCV data, runs backtests
+python examples/chharmoney_demo.py
 
-# Assert GPU is used (fails loudly if not)
-python examples/chharmoney_demo.py (trading) + examples/composer_demo.py (audio) --gpu
+# Gradient descent on Sharpe ratio (50 steps)
+python examples/chharmoney_demo.py --optimize
 
-# Full benchmark (matmul, batched, gradient)
-python examples/chharmoney_demo.py (trading) + examples/composer_demo.py (audio) --bench
+# Full benchmark suite (parallel backtests, Sharpe grad, transformer)
+python examples/chharmoney_demo.py --bench
 ```
 
 Expected output on AMD GPU:
@@ -284,9 +287,29 @@ Out of memory?
 
 ---
 
+## JAX Primer (New to JAX?)
+
+JAX = NumPy + Automatic Differentiation + GPU Compilation. It's the library used by DeepMind (AlphaFold 2), Google Brain, quant traders, physicists, and ML researchers who need to differentiate through anything.
+
+**New to JAX? Read these first:**
+- [docs/jax-gotchas.md](docs/jax-gotchas.md) — the 9 things that break your code (immutable arrays, control flow in jit, NumPy mixing) + AMD-specific traps
+- [docs/jax-ecosystem.md](docs/jax-ecosystem.md) — Flax, Haiku, Equinox, Optax, DiffrRax explained + AMD compatibility matrix + learning path
+
+**Why JAX instead of PyTorch?**
+- Write equations, JAX handles differentiation and GPU
+- `vmap` parallelizes any function across a batch — perfect for backtesting 10,000 strategies simultaneously
+- `grad` differentiates through any computation — optimize Sharpe ratio directly
+- Best for research, math-heavy code, custom algorithms
+
+**Why AMD needs a guide:** JAX officially supports NVIDIA and TPUs. AMD support "exists but is fragile" — this repo is the missing piece.
+
+---
+
 ## Related Guides
 
 - [torch-amd-setup](https://github.com/chharith/torch-amd-setup) — PyTorch on AMD GPU (the original guide this repo follows)
+- [docs/jax-gotchas.md](docs/jax-gotchas.md) — JAX gotchas + AMD-specific failure modes
+- [docs/jax-ecosystem.md](docs/jax-ecosystem.md) — Flax, Haiku, Equinox, Optax ecosystem + who uses JAX
 - [docs/rocm-migration.md](docs/rocm-migration.md) — ROCm 5.x → 6.x migration
 - [docs/troubleshooting.md](docs/troubleshooting.md) — Full error reference
 
