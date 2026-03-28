@@ -4,7 +4,7 @@
 
 JAX officially supports NVIDIA and TPUs. AMD support exists but is scattered across GitHub issues, Gists, and forum posts with conflicting instructions. This guide consolidates everything that actually works, tested on RX 5700 XT / RX 6000 / RX 7000 series.
 
-> Proof that it works: see [`examples/chharmoney_demo.py`](examples/chharmoney_demo.py) — a real transformer model running on AMD GPU via JAX.
+> Proof that it works: see [`examples/chharmoney_demo.py (trading) + examples/composer_demo.py (audio)`](examples/chharmoney_demo.py (trading) + examples/composer_demo.py (audio)) — real models running on AMD GPU — quant trading math (Chharmoney) and audio (Composer).
 
 ---
 
@@ -19,7 +19,7 @@ python scripts/test_gpu_directml.py   # Windows
 python scripts/test_gpu_rocm.py       # Linux / WSL2
 
 # Step 3: Run the real model demo
-python examples/chharmoney_demo.py --bench
+python examples/chharmoney_demo.py (trading) + examples/composer_demo.py (audio) --bench
 ```
 
 ---
@@ -172,14 +172,14 @@ Everything works on CPU. Slower, but useful for development and testing.
 ```bash
 pip install jax jaxlib
 python scripts/test_jax_install.py
-python examples/chharmoney_demo.py  # runs on CPU, all features work
+python examples/chharmoney_demo.py (trading) + examples/composer_demo.py (audio)  # runs on CPU, all features work
 ```
 
 ---
 
 ## Chharmoney Demo
 
-`examples/chharmoney_demo.py` is a real transformer model (not toy code):
+`examples/chharmoney_demo.py (trading) + examples/composer_demo.py (audio)` is a real transformer model (not toy code):
 
 - **Model**: 4-layer audio transformer, 256 dim, 4 heads
 - **Task**: Harmonic prediction — given a mel spectrogram, predict the next musical note
@@ -187,13 +187,13 @@ python examples/chharmoney_demo.py  # runs on CPU, all features work
 
 ```bash
 # Basic run
-python examples/chharmoney_demo.py
+python examples/chharmoney_demo.py (trading) + examples/composer_demo.py (audio)
 
 # Assert GPU is used (fails loudly if not)
-python examples/chharmoney_demo.py --gpu
+python examples/chharmoney_demo.py (trading) + examples/composer_demo.py (audio) --gpu
 
 # Full benchmark (matmul, batched, gradient)
-python examples/chharmoney_demo.py --bench
+python examples/chharmoney_demo.py (trading) + examples/composer_demo.py (audio) --bench
 ```
 
 Expected output on AMD GPU:
