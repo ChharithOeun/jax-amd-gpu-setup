@@ -1,24 +1,31 @@
 """
-chharmoney_demo.py — Chharmoney Audio Model in JAX on AMD GPU
+composer_demo.py — Composer Audio Engine in JAX on AMD GPU
 ==============================================================
-A practical demonstration of JAX on AMD GPU using a real-world
-audio neural network. This is the concrete proof that JAX works
-on AMD — not just matrix math, but actual AI model inference.
+Composer is Chharbot's audio intelligence engine.
+It handles mel spectrogram extraction, harmonic analysis,
+and next-note prediction — all GPU-accelerated via JAX.
 
-Chharmoney is a harmonic prediction model: given audio features
-(mel spectrogram), it predicts the next musical phrase.
+Separate from Chharmoney (which handles quant trading math).
+Composer = music. Chharmoney = money.
+
+Architecture:
+  - JAX-native mel filterbank (no librosa dependency)
+  - Transformer encoder: 4 layers, 256 dim, 4 heads
+  - Causal self-attention over audio patches
+  - Output: MIDI note logits (next phrase prediction)
+  - vmap: batch multiple audio clips in parallel on GPU
 
 This demo covers:
-  - Audio feature extraction in JAX (mel spectrogram)
-  - Transformer block in JAX (the core of modern audio models)
+  - Audio feature extraction in JAX (mel spectrogram, no external deps)
+  - Transformer block in JAX (the core of modern audio AI)
   - JIT compilation on AMD GPU
-  - vmap for batch processing
-  - Gradient computation (for fine-tuning)
+  - vmap for parallel multi-clip processing
+  - Gradient computation (for fine-tuning on new music)
 
 Usage:
-    python examples/chharmoney_demo.py
-    python examples/chharmoney_demo.py --gpu   # force GPU check
-    python examples/chharmoney_demo.py --bench # run full benchmark
+    python examples/composer_demo.py
+    python examples/composer_demo.py --gpu    # assert GPU is used
+    python examples/composer_demo.py --bench  # full benchmark suite
 """
 
 import argparse
@@ -161,9 +168,9 @@ def transformer_block(params, x):
     x = x + ffn(params["ffn"], layer_norm(x))
     return x
 
-# ── Chharmoney Model ──────────────────────────────────────────────────────────
+# ── Composer Model ──────────────────────────────────────────────────────────
 
-def init_chharmoney(key, d_model=D_MODEL, n_layers=N_LAYERS, n_heads=N_HEADS):
+def init_composer(key, d_model=D_MODEL, n_layers=N_LAYERS, n_heads=N_HEADS):
     """Initialize all model parameters."""
     params = {}
     keys = random.split(key, 20)
@@ -199,7 +206,7 @@ def init_chharmoney(key, d_model=D_MODEL, n_layers=N_LAYERS, n_heads=N_HEADS):
     return params
 
 @partial(jit, static_argnames=["training"])
-def chharmoney_forward(params, patches, training=False):
+def composer_forward(params, patches, training=False):
     """
     Forward pass: audio patches -> next note logits.
     patches: (seq_len, patch_dim)
@@ -223,7 +230,7 @@ def chharmoney_forward(params, patches, training=False):
 
 def cross_entropy_loss(params, patches, targets):
     """Cross-entropy loss for next-note prediction."""
-    logits = chharmoney_forward(params, patches)
+    logits = composer_forward(params, patches)
     log_probs = jax.nn.log_softmax(logits, axis=-1)
     loss = -jnp.mean(log_probs[jnp.arange(len(targets)), targets])
     return loss
@@ -232,7 +239,7 @@ def cross_entropy_loss(params, patches, targets):
 grad_fn = jit(grad(cross_entropy_loss))
 
 # Batched forward pass
-batched_forward = jit(vmap(chharmoney_forward, in_axes=(None, 0)))
+batched_forward = jit(vmap(composer_forward, in_axes=(None, 0)))
 
 # ── Benchmarks ────────────────────────────────────────────────────────────────
 
@@ -242,11 +249,11 @@ def benchmark_model(params, n_runs=10):
 
     # Single forward pass
     patches = random.normal(key, (32, PATCH_SIZE * N_MELS))  # 32 patches
-    _ = chharmoney_forward(params, patches).block_until_ready()  # warmup
+    _ = composer_forward(params, patches).block_until_ready()  # warmup
 
     t0 = time.perf_counter()
     for _ in range(n_runs):
-        out = chharmoney_forward(params, patches).block_until_ready()
+        out = composer_forward(params, patches).block_until_ready()
     elapsed = (time.perf_counter() - t0) / n_runs
     print(f"    Single forward (32 patches) : {elapsed*1000:.2f}ms")
 
@@ -274,12 +281,12 @@ def benchmark_model(params, n_runs=10):
 # ── Main Demo ─────────────────────────────────────────────────────────────────
 
 def main():
-    parser = argparse.ArgumentParser(description="Chharmoney JAX demo")
+    parser = argparse.ArgumentParser(description="Composer JAX audio demo")
     parser.add_argument("--gpu",   action="store_true", help="Assert GPU is used")
     parser.add_argument("--bench", action="store_true", help="Run full benchmark")
     args = parser.parse_args()
 
-    print("\nChharmoney — Harmonic Prediction Model (JAX on AMD GPU)")
+    print("\nComposer — Audio Intelligence Engine (JAX on AMD GPU)")
     print("=========================================================")
 
     # Device info
@@ -291,9 +298,9 @@ def main():
         print("  See scripts/test_gpu_directml.py or scripts/test_gpu_rocm.py")
 
     # Initialize model
-    print("\n  Initializing Chharmoney model...")
+    print("\n  Initializing Composer model...")
     key = random.PRNGKey(42)
-    params = init_chharmoney(key)
+    params = init_composer(key)
 
     # Count parameters
     n_params = sum(x.size for x in jax.tree_util.tree_leaves(params))
@@ -328,14 +335,14 @@ def main():
     # Forward pass (JIT compiles on first call)
     print("\n  Running forward pass (first call triggers XLA compilation)...")
     t0 = time.perf_counter()
-    logits = chharmoney_forward(params, patches)
+    logits = composer_forward(params, patches)
     logits.block_until_ready()
     compile_time = time.perf_counter() - t0
     print(f"  First call (+ compile): {compile_time*1000:.0f}ms")
 
     # Second call (cached)
     t0 = time.perf_counter()
-    logits = chharmoney_forward(params, patches)
+    logits = composer_forward(params, patches)
     logits.block_until_ready()
     cached_time = time.perf_counter() - t0
     print(f"  Cached call           : {cached_time*1000:.1f}ms")
@@ -366,7 +373,7 @@ def main():
         benchmark_model(params)
 
     print("\n" + "="*54)
-    print("  Chharmoney demo complete!")
+    print("  Composer demo complete!")
     print(f"  Backend used : {jax.default_backend().upper()}")
     if jax.default_backend() == "gpu":
         print("  AMD GPU acceleration CONFIRMED")
