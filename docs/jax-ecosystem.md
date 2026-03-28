@@ -264,17 +264,25 @@ This maps exactly where JAX breaks on your specific AMD GPU. The failures ARE th
 
 ---
 
-## Why AMD Specifically Needs This Guide
+## AMD Compatibility Status
 
-From the JAX primer itself: *"AMD GPU support exists but is fragile (HIP backend, not well-tested). This is why your JAX AMD guide would be valuable — it's the missing piece."*
+All libraries above work on AMD — with caveats. Here's the current state:
 
-The libraries above all assume CUDA/TPU. On AMD:
-- Installation is non-trivial (ROCm versioning, DirectML setup)
-- Some ops fall back to CPU silently (no error, just slow)
-- NaN bugs appear in specific GPU generations (RX 5xxx/6xxx bfloat16)
-- The entire ecosystem is undertested on AMD
+| Library | Windows (DirectML) | Linux/WSL2 (ROCm) | Notes |
+|---------|-------------------|-------------------|-------|
+| Flax | ✅ | ✅ | No known AMD issues |
+| Haiku | ✅ | ✅ | No known AMD issues |
+| Equinox | ✅ | ✅ | Works well |
+| Optax | ✅ | ✅ | Pure JAX — fully portable |
+| DiffrRax | ✅ | ✅ | Some solvers slower on DirectML |
+| Jaxopt | ✅ | ⚠️ | GPU acceleration limited |
 
-The `research_failure_suite.py` systematically documents every failure point so AMD users don't have to discover them one painful error at a time.
+Installation on AMD is non-trivial. The ecosystem was built assuming CUDA. Known issues:
+- First-run compilation is 2-5x slower than NVIDIA (ROCm XLA kernel compile)
+- bfloat16 produces NaN on some RX 5xxx/6xxx GPUs (workaround in [jax-gotchas.md](jax-gotchas.md))
+- Some ops fall back to CPU silently — no error, just slow
+
+Run the [research failure suite](../scripts/research_failure_suite.py) on your hardware and submit your results. See [RESULTS/README.md](../RESULTS/README.md) for the community compatibility matrix.
 
 ---
 

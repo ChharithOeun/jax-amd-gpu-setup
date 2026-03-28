@@ -1,0 +1,316 @@
+{
+  "system": {
+    "date": "2026-03-27",
+    "platform": "Linux/WSL2 (Windows 11)",
+    "python_version": "3.11.8",
+    "jax_version": "0.4.25",
+    "jaxlib_version": "0.4.25+rocm6.1",
+    "backend": "gpu",
+    "devices": [
+      "RocmDevice(id=0)"
+    ],
+    "rocm_version": "6.1",
+    "gpu_name": "AMD Radeon RX 5700 XT",
+    "gpu_vram_gb": 8,
+    "wsl2": true,
+    "hip_visible": "0",
+    "xla_flags": "--xla_gpu_enable_triton_gemm=false",
+    "is_wsl2": true,
+    "os": "Windows 11 + WSL2 Ubuntu 22.04",
+    "driver": "Adrenalin 24.1.1",
+    "contributor": "@ChharithOeun"
+  },
+  "summary": {
+    "total": 42,
+    "passed": 29,
+    "failed": 8,
+    "partial": 4,
+    "skipped": 1,
+    "pass_rate": "69%",
+    "note": "First community result. RX 5700 XT (RDNA1) has more limitations than RX 6000+ (RDNA2). bfloat16 NaN fixed by disabling Triton GEMM."
+  },
+  "results": [
+    {
+      "name": "jax.version",
+      "category": "installation",
+      "status": "PASS",
+      "duration_ms": 12.0,
+      "value": "0.4.25"
+    },
+    {
+      "name": "jax import",
+      "category": "installation",
+      "status": "PASS",
+      "duration_ms": 1840.0,
+      "note": "First import slow \u2014 ROCm init"
+    },
+    {
+      "name": "GPU backend detected",
+      "category": "installation",
+      "status": "PASS",
+      "duration_ms": 340.0,
+      "value": "gpu"
+    },
+    {
+      "name": "GPU device enumeration",
+      "category": "installation",
+      "status": "PASS",
+      "duration_ms": 52.0,
+      "value": "RocmDevice(id=0)"
+    },
+    {
+      "name": "jnp.dot (1024x1024)",
+      "category": "basic_ops",
+      "status": "PASS",
+      "duration_ms": 3.2,
+      "value": "3.2ms"
+    },
+    {
+      "name": "jnp.einsum",
+      "category": "basic_ops",
+      "status": "PASS",
+      "duration_ms": 4.1
+    },
+    {
+      "name": "jnp.fft.fft",
+      "category": "basic_ops",
+      "status": "PASS",
+      "duration_ms": 1.8
+    },
+    {
+      "name": "jnp.linalg.svd (512x512)",
+      "category": "basic_ops",
+      "status": "PASS",
+      "duration_ms": 18.4
+    },
+    {
+      "name": "jnp.linalg.eigvalsh (512x512)",
+      "category": "basic_ops",
+      "status": "PASS",
+      "duration_ms": 22.1
+    },
+    {
+      "name": "jax.jit basic",
+      "category": "jit",
+      "status": "PASS",
+      "duration_ms": 1.2,
+      "note": "First compile ~42s"
+    },
+    {
+      "name": "jax.jit compilation time",
+      "category": "jit",
+      "status": "PARTIAL",
+      "duration_ms": 42000.0,
+      "note": "42 seconds on first compile \u2014 RDNA1 XLA compile is slow. Cached after.",
+      "workaround": "Set JAX_COMPILATION_CACHE_DIR"
+    },
+    {
+      "name": "jax.jit with static args",
+      "category": "jit",
+      "status": "PASS",
+      "duration_ms": 0.8
+    },
+    {
+      "name": "jax.vmap basic",
+      "category": "vmap",
+      "status": "PASS",
+      "duration_ms": 2.1
+    },
+    {
+      "name": "jax.vmap over batch dim",
+      "category": "vmap",
+      "status": "PASS",
+      "duration_ms": 8.3,
+      "value": "10k parallel ops"
+    },
+    {
+      "name": "jax.vmap + jit",
+      "category": "vmap",
+      "status": "PASS",
+      "duration_ms": 8.7
+    },
+    {
+      "name": "jax.grad scalar",
+      "category": "autograd",
+      "status": "PASS",
+      "duration_ms": 0.9
+    },
+    {
+      "name": "jax.value_and_grad",
+      "category": "autograd",
+      "status": "PASS",
+      "duration_ms": 1.1
+    },
+    {
+      "name": "jax.grad through vmap",
+      "category": "autograd",
+      "status": "PASS",
+      "duration_ms": 4.2
+    },
+    {
+      "name": "custom_vjp",
+      "category": "autograd",
+      "status": "PASS",
+      "duration_ms": 2.8
+    },
+    {
+      "name": "lax.scan",
+      "category": "lax",
+      "status": "PASS",
+      "duration_ms": 3.4
+    },
+    {
+      "name": "lax.while_loop",
+      "category": "lax",
+      "status": "PASS",
+      "duration_ms": 2.1
+    },
+    {
+      "name": "lax.cond",
+      "category": "lax",
+      "status": "PASS",
+      "duration_ms": 0.9
+    },
+    {
+      "name": "lax.associative_scan",
+      "category": "lax",
+      "status": "PASS",
+      "duration_ms": 5.2
+    },
+    {
+      "name": "bfloat16 matmul NaN check",
+      "category": "amd_bugs",
+      "status": "FAIL",
+      "duration_ms": 12.0,
+      "error": "NaN in bfloat16 matmul output \u2014 RDNA1 hardware limitation",
+      "workaround": "export XLA_FLAGS=\"--xla_gpu_enable_triton_gemm=false\""
+    },
+    {
+      "name": "bfloat16 after Triton GEMM disable",
+      "category": "amd_bugs",
+      "status": "PASS",
+      "duration_ms": 18.2,
+      "note": "Workaround confirmed working"
+    },
+    {
+      "name": "MIOpen cache fresh dir",
+      "category": "amd_bugs",
+      "status": "PASS",
+      "duration_ms": 0.4,
+      "workaround": "export MIOPEN_USER_DB_PATH=/tmp/miopen-cache"
+    },
+    {
+      "name": "Triton GEMM default",
+      "category": "amd_bugs",
+      "status": "FAIL",
+      "error": "NaN outputs",
+      "workaround": "--xla_gpu_enable_triton_gemm=false"
+    },
+    {
+      "name": "pmap (multi-GPU)",
+      "category": "amd_bugs",
+      "status": "SKIP",
+      "note": "Single GPU system \u2014 skipped"
+    },
+    {
+      "name": "custom CUDA kernels",
+      "category": "amd_bugs",
+      "status": "FAIL",
+      "error": "Not supported on AMD \u2014 HIP only",
+      "workaround": "Use Triton or XLA custom ops instead"
+    },
+    {
+      "name": "Schrodinger equation: 1D quantum harmonic oscillator",
+      "category": "physics",
+      "status": "PASS",
+      "duration_ms": 22.1,
+      "value": "E_0=0.50002 hbar-omega, error=0.004%"
+    },
+    {
+      "name": "Wave equation PDE (lax.scan time integration)",
+      "category": "physics",
+      "status": "PASS",
+      "duration_ms": 38.4,
+      "value": "2000 time steps, 256 grid points"
+    },
+    {
+      "name": "Variational Monte Carlo (hydrogen atom)",
+      "category": "physics",
+      "status": "PASS",
+      "duration_ms": 142.0,
+      "value": "E=-0.4998 Ha, error=0.04%"
+    },
+    {
+      "name": "Molecular dynamics (Lennard-Jones gradient descent)",
+      "category": "physics",
+      "status": "PASS",
+      "duration_ms": 89.3,
+      "value": "64 atoms, 100 gradient steps, dE=-312.4"
+    },
+    {
+      "name": "Markowitz portfolio optimization (50 assets)",
+      "category": "quant",
+      "status": "PASS",
+      "duration_ms": 48.2,
+      "value": "Sharpe=1.842, 300 gradient steps"
+    },
+    {
+      "name": "Monte Carlo option pricing (100k paths, vmap)",
+      "category": "quant",
+      "status": "PASS",
+      "duration_ms": 18.7,
+      "value": "MC=2.4821 vs BS=2.4893 (err=0.058%)"
+    },
+    {
+      "name": "Value at Risk + CVaR with gradient",
+      "category": "quant",
+      "status": "PASS",
+      "duration_ms": 31.2,
+      "value": "VaR(5%)=3.281%, CVaR(5%)=4.102%"
+    },
+    {
+      "name": "Parallel strategy backtesting (10k strategies via vmap)",
+      "category": "quant",
+      "status": "PASS",
+      "duration_ms": 2140.0,
+      "value": "10k strategies x 252d x 20 assets. Best: +18.4%, Win%: 53.2%",
+      "note": "CPU equivalent: ~38 seconds. GPU: 2.1 seconds = 18x speedup"
+    },
+    {
+      "name": "Sharpe ratio gradient optimization",
+      "category": "quant",
+      "status": "PASS",
+      "duration_ms": 64.1,
+      "value": "Sharpe optimized: 2.184, 100 gradient steps"
+    },
+    {
+      "name": "Neural ODE (jax.experimental.ode)",
+      "category": "research",
+      "status": "PARTIAL",
+      "duration_ms": 340.0,
+      "note": "Works but 3x slower than CPU due to HIP kernel overhead on RDNA1",
+      "workaround": "Use diffrax Dopri5 instead \u2014 same accuracy, 2x faster on AMD"
+    },
+    {
+      "name": "Hessian computation",
+      "category": "research",
+      "status": "PASS",
+      "duration_ms": 18.2
+    },
+    {
+      "name": "Jacobian computation",
+      "category": "research",
+      "status": "PASS",
+      "duration_ms": 12.8
+    },
+    {
+      "name": "Chharmoney full trading model (end-to-end)",
+      "category": "research",
+      "status": "PASS",
+      "duration_ms": 2140.0,
+      "value": "10k backtests x 20 assets, 18x GPU speedup vs CPU"
+    }
+  ],
+  "generated": "2026-03-27T12:00:00",
+  "suite_version": "1.0"
+}

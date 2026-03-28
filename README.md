@@ -301,7 +301,7 @@ JAX = NumPy + Automatic Differentiation + GPU Compilation. It's the library used
 - `grad` differentiates through any computation — optimize Sharpe ratio directly
 - Best for research, math-heavy code, custom algorithms
 
-**Why AMD needs a guide:** JAX officially supports NVIDIA and TPUs. AMD support "exists but is fragile" — this repo is the missing piece.
+**Why AMD needs a guide:** JAX officially supports NVIDIA and TPUs. AMD support exists but is underdocumented — this repo consolidates what actually works, tested on real hardware.
 
 ---
 
