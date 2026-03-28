@@ -1,0 +1,138 @@
+name: Auto-Update Changelog
+
+# Runs on every push to main. Reads new commits since the last CHANGELOG
+# update, formats them into the [Unreleased] section, and commits back.
+# Only runs if actual source files changed (not if the changelog itself changed,
+# to avoid infinite loops).
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - 'CHANGELOG.md'
+
+jobs:
+  update-changelog:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # need full history to read commits
+
+      - name: Generate changelog entries from new commits
+        id: gen
+        run: |
+          python3 - <<'PYEOF'
+          import subprocess, re, datetime, sys
+
+          CHANGELOG = "CHANGELOG.md"
+
+          # ── 1. Find the last commit that touched CHANGELOG.md ───────────────
+          result = subprocess.run(
+              ["git", "log", "--follow", "--pretty=format:%H", "--", CHANGELOG],
+              capture_output=True, text=True
+          )
+          last_changelog_commits = result.stdout.strip().splitlines()
+
+          # Get the commit BEFORE the last changelog update (so we don't re-add it)
+          if last_changelog_commits:
+              since_sha = last_changelog_commits[0]
+              log_range = f"{since_sha}..HEAD"
+          else:
+              # First time — take last 20 commits
+              log_range = "HEAD~20..HEAD"
+
+          # ── 2. Get new commits since last changelog update ──────────────────
+          result = subprocess.run(
+              ["git", "log", log_range, "--pretty=format:%h|%ad|%s|%an", "--date=short"],
+              capture_output=True, text=True
+          )
+          lines = [l for l in result.stdout.strip().splitlines() if l.strip()]
+
+          if not lines:
+              print("No new commits to add to CHANGELOG.")
+              sys.exit(0)
+
+          # ── 3. Categorise commits by conventional commit prefix ─────────────
+          CATEGORIES = {
+              "feat":     ("### Added",   []),
+              "fix":      ("### Fixed",   []),
+              "docs":     ("### Changed", []),
+              "chore":    ("### Changed", []),
+              "refactor": ("### Changed", []),
+              "perf":     ("### Added",   []),
+              "test":     ("### Added",   []),
+              "other":    ("### Changed", []),
+          }
+          buckets = {k: [] for k in CATEGORIES}
+
+          for line in lines:
+              parts = line.split("|", 3)
+              if len(parts) < 4:
+                  continue
+              sha, date, subject, author = parts
+              # Match conventional commit prefix
+              m = re.match(r'^(feat|fix|docs|chore|refactor|perf|test)(\([^)]+\))?!?:', subject)
+              key = m.group(1) if m else "other"
+              # Strip the prefix for the entry text
+              body = re.sub(r'^(feat|fix|docs|chore|refactor|perf|test)(\([^)]+\))?!?:\s*', '', subject)
+              scope_match = re.match(r'^(?:feat|fix|docs|chore|refactor|perf|test)\(([^)]+)\)', subject)
+              scope = f"**{scope_match.group(1)}** — " if scope_match else ""
+              buckets[key].append(f"- {scope}{body} (`{sha}`)")
+
+          # ── 4. Build the new [Unreleased] block ─────────────────────────────
+          today = datetime.date.today().isoformat()
+          section_lines = [f"## [Unreleased] — updated {today}", ""]
+
+          for key, (header, _) in CATEGORIES.items():
+              entries = buckets[key]
+              if entries:
+                  # Avoid duplicate headers
+                  if header not in section_lines:
+                      section_lines.append(header)
+                  section_lines.extend(entries)
+
+          section_lines.append("")
+
+          # ── 5. Inject into CHANGELOG.md just after the first [Unreleased] line
+          with open(CHANGELOG, "r") as f:
+              content = f.read()
+
+          # Remove existing [Unreleased] block (lines between ## [Unreleased] and next ##)
+          content = re.sub(
+              r'## \[Unreleased\][^\n]*\n(?:(?!## \[).*\n)*',
+              '',
+              content
+          )
+
+          # Insert new block after the header/policy section (before first versioned section)
+          insertion = "\n".join(section_lines) + "\n"
+          # Find first versioned section (## [0. or ## [1.)
+          match = re.search(r'^## \[\d', content, re.MULTILINE)
+          if match:
+              pos = match.start()
+              content = content[:pos] + insertion + "\n" + content[pos:]
+          else:
+              content = content + "\n" + insertion
+
+          with open(CHANGELOG, "w") as f:
+              f.write(content)
+
+          print(f"Changelog updated with {len(lines)} new commit(s).")
+          PYEOF
+
+      - name: Commit updated CHANGELOG
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if git diff --quiet CHANGELOG.md; then
+            echo "No changes to CHANGELOG.md"
+          else
+            git add CHANGELOG.md
+            git commit -m "chore(changelog): auto-update [skip ci]"
+            git push
+          fi

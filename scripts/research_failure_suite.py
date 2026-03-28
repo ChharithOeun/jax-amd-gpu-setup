@@ -1217,9 +1217,12 @@ def generate_report(system: SystemInfo) -> dict:
     }
     return report
 
-def save_report(report: dict, system: SystemInfo):
-    results_dir = Path(__file__).parent.parent / "RESULTS"
-    results_dir.mkdir(exist_ok=True)
+def save_report(report: dict, system: SystemInfo, output_dir: str = None):
+    if output_dir:
+        results_dir = Path(output_dir)
+    else:
+        results_dir = Path(__file__).parent.parent / "RESULTS"
+    results_dir.mkdir(exist_ok=True, parents=True)
 
     gpu_slug = system.gpu_name.replace(" ", "_").replace("/", "-")[:30] or "unknown_gpu"
     rocm_slug = system.rocm_version.replace(".", "_")[:10] or "no_rocm"
@@ -1307,10 +1310,22 @@ def generate_github_issue(report: dict, system: SystemInfo) -> str:
 def main():
     import argparse
     parser = argparse.ArgumentParser(description="JAX AMD Research Failure Suite")
-    parser.add_argument("--submit",   action="store_true", help="Open GitHub issue with results")
-    parser.add_argument("--quick",    action="store_true", help="Skip slow tests (perf, memory stress)")
-    parser.add_argument("--category", type=str,            help="Run only tests in this category")
+    parser.add_argument("--submit",     action="store_true",
+                        help="Open GitHub issue draft with results")
+    parser.add_argument("--quick",      action="store_true",
+                        help="Skip slow tests (perf, memory stress)")
+    parser.add_argument("--category",   type=str,
+                        help="Run only tests in this category")
+    parser.add_argument("--output-dir", type=str, default=None,
+                        help="Directory to save result JSON (default: RESULTS/ in repo root)")
+    parser.add_argument("--cpu-only",   action="store_true",
+                        help="Force CPU backend — verify math without GPU timing")
     args = parser.parse_args()
+
+    if args.cpu_only:
+        import os
+        os.environ["JAX_PLATFORMS"] = "cpu"
+        print("[cpu-only mode] JAX_PLATFORMS=cpu — math verified, timings are CPU not GPU")
 
     print("\nJAX AMD GPU Research Failure Suite")
     print("====================================")
@@ -1351,7 +1366,7 @@ def main():
 
     # Generate and save report
     report   = generate_report(system)
-    out_path = save_report(report, system)
+    out_path = save_report(report, system, output_dir=args.output_dir)
     print_summary(report)
 
     print(f"\n  Report saved: {out_path}")
