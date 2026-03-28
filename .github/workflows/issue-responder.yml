@@ -23,171 +23,184 @@ jobs:
             const text  = title + ' ' + body;
 
             // ── Known error pattern matching ──────────────────────────────
+            // NOTE: Multi-line response strings are built as arrays to avoid
+            // YAML block-scalar indentation conflicts with template literals.
+
             const patterns = [
               {
                 keywords: ['nan', 'nan output', 'bfloat16', 'triton', 'matmul nan'],
                 label: 'amd-nan-bug',
-                response: `## ⚡ Auto-response: bfloat16 / Triton GEMM NaN
-
-This is a **known issue on RDNA1 GPUs** (RX 5500/5600/5700 series) and some RDNA2 cards.
-
-**Fix — disable Triton GEMM before importing JAX:**
-\`\`\`bash
-export XLA_FLAGS='--xla_gpu_enable_triton_gemm=false'
-python your_script.py
-\`\`\`
-
-Or in Python before \`import jax\`:
-\`\`\`python
-import os
-os.environ['XLA_FLAGS'] = '--xla_gpu_enable_triton_gemm=false'
-import jax
-\`\`\`
-
-**Why this happens:** Triton's GEMM kernel has a precision bug on RDNA1 hardware with bfloat16. The workaround routes through a different XLA path that produces correct results.
-
-**Verified working on:** RX 5700 XT (ROCm 6.1, JAX 0.4.25)
-
-See: [docs/jax-gotchas.md#amd-specific-gotchas](docs/jax-gotchas.md) for the full AMD-specific gotchas list.`
+                response: [
+                  '## ⚡ Auto-response: bfloat16 / Triton GEMM NaN',
+                  '',
+                  'This is a **known issue on RDNA1 GPUs** (RX 5500/5600/5700 series) and some RDNA2 cards.',
+                  '',
+                  '**Fix — disable Triton GEMM before importing JAX:**',
+                  '```bash',
+                  "export XLA_FLAGS='--xla_gpu_enable_triton_gemm=false'",
+                  'python your_script.py',
+                  '```',
+                  '',
+                  'Or in Python before `import jax`:',
+                  '```python',
+                  'import os',
+                  "os.environ['XLA_FLAGS'] = '--xla_gpu_enable_triton_gemm=false'",
+                  'import jax',
+                  '```',
+                  '',
+                  '**Why this happens:** Triton GEMM has a precision bug on RDNA1 hardware with bfloat16. The workaround routes through a different XLA path that produces correct results.',
+                  '',
+                  '**Verified working on:** RX 5700 XT (ROCm 6.1, JAX 0.4.25)',
+                  '',
+                  'See: [docs/jax-gotchas.md](docs/jax-gotchas.md) for the full AMD-specific gotchas list.',
+                ].join('\n'),
               },
               {
                 keywords: ['miopen', 'invalid argument', 'kernel', 'missing', 'algorithm'],
                 label: 'miopen-cache',
-                response: `## ⚡ Auto-response: MIOpen Error
-
-This is a **MIOpen kernel cache issue** — usually caused by a ROCm version change or corrupt cache.
-
-**Fix:**
-\`\`\`bash
-# Point MIOpen to a fresh directory
-export MIOPEN_USER_DB_PATH=/tmp/miopen-$(date +%Y%m%d)
-mkdir -p $MIOPEN_USER_DB_PATH
-
-# Add to ~/.bashrc to make permanent
-echo 'export MIOPEN_USER_DB_PATH=/tmp/miopen-cache' >> ~/.bashrc
-mkdir -p /tmp/miopen-cache
-\`\`\`
-
-If you recently upgraded ROCm, also see [docs/rocm-migration.md](docs/rocm-migration.md) for the full migration guide.`
+                response: [
+                  '## ⚡ Auto-response: MIOpen Error',
+                  '',
+                  'This is a **MIOpen kernel cache issue** — usually caused by a ROCm version change or corrupt cache.',
+                  '',
+                  '**Fix:**',
+                  '```bash',
+                  '# Point MIOpen to a fresh directory',
+                  'export MIOPEN_USER_DB_PATH=/tmp/miopen-$(date +%Y%m%d)',
+                  'mkdir -p $MIOPEN_USER_DB_PATH',
+                  '',
+                  '# Add to ~/.bashrc to make permanent',
+                  "echo 'export MIOPEN_USER_DB_PATH=/tmp/miopen-cache' >> ~/.bashrc",
+                  'mkdir -p /tmp/miopen-cache',
+                  '```',
+                  '',
+                  'If you recently upgraded ROCm, also run `rocminfo` to verify the driver sees your GPU.',
+                ].join('\n'),
               },
               {
                 keywords: ['no gpu', 'gpu not found', 'no gpu backend', 'cpu backend', 'not using gpu', 'falling back'],
                 label: 'gpu-not-detected',
-                response: `## ⚡ Auto-response: GPU Not Detected
-
-**Step 1 — Check which path you're on:**
-- Windows: Did you install \`jax-directml\`?
-- Linux/WSL2: Did you install \`jax[rocm6_1]\`?
-
-**Windows (DirectML):**
-\`\`\`powershell
-pip install jax jaxlib jax-directml
-$env:JAX_PLATFORMS="gpu"
-python -c "import jax; print(jax.devices())"
-\`\`\`
-
-**Linux / WSL2 (ROCm):**
-\`\`\`bash
-# First verify ROCm sees your GPU
-rocm-smi
-
-# Then install JAX ROCm wheels
-pip install "jax[rocm6_1]" -f https://storage.googleapis.com/jax-releases/rocm/jax_rocm_releases.html
-
-export JAX_PLATFORMS=gpu
-python -c "import jax; print(jax.devices())"
-\`\`\`
-
-**WSL2-specific:** Make sure you installed the AMD GPU driver for WSL2 on the **Windows side** (not inside WSL2). Download from amd.com → Support → select your GPU → Windows 11 → WSL2.
-
-Run our verification script: \`python scripts/test_jax_install.py\``
+                response: [
+                  '## ⚡ Auto-response: GPU Not Detected',
+                  '',
+                  '**Step 1 — Check which path you are on:**',
+                  '- Windows: Did you install `jax-directml`?',
+                  '- Linux/WSL2: Did you install `jax[rocm6_1]`?',
+                  '',
+                  '**Windows (DirectML):**',
+                  '```powershell',
+                  'pip install jax jaxlib jax-directml',
+                  '$env:JAX_PLATFORMS="gpu"',
+                  'python -c "import jax; print(jax.devices())"',
+                  '```',
+                  '',
+                  '**Linux / WSL2 (ROCm):**',
+                  '```bash',
+                  '# First verify ROCm sees your GPU',
+                  'rocm-smi',
+                  '',
+                  '# Then install JAX ROCm wheels',
+                  'pip install "jax[rocm6_1]" -f https://storage.googleapis.com/jax-releases/rocm/jax_rocm_releases.html',
+                  '',
+                  'export JAX_PLATFORMS=gpu',
+                  'python -c "import jax; print(jax.devices())"',
+                  '```',
+                  '',
+                  '**WSL2-specific:** Install the AMD GPU driver on the **Windows side** (not inside WSL2). Download from amd.com → Support → your GPU → Windows 11 → WSL2.',
+                ].join('\n'),
               },
               {
                 keywords: ['oom', 'out of memory', 'allocat', 'vram', 'memory', 'preallocat'],
                 label: 'oom',
-                response: `## ⚡ Auto-response: Out of Memory / VRAM Exhausted
-
-JAX pre-allocates 90% of GPU VRAM by default. On AMD cards with 8GB or less, this fills up fast.
-
-**Fix — disable pre-allocation:**
-\`\`\`bash
-export XLA_PYTHON_CLIENT_PREALLOCATE=false
-\`\`\`
-
-**Or — cap the allocation (e.g. 50% of VRAM):**
-\`\`\`bash
-export XLA_PYTHON_CLIENT_MEM_FRACTION=0.5
-\`\`\`
-
-**In Python (before import jax):**
-\`\`\`python
-import os
-os.environ["XLA_PYTHON_CLIENT_PREALLOCATE"] = "false"
-import jax
-\`\`\`
-
-For gradient checkpointing on large models: use \`jax.checkpoint\` to trade compute for memory.`
+                response: [
+                  '## ⚡ Auto-response: Out of Memory / VRAM Exhausted',
+                  '',
+                  'JAX pre-allocates 90% of GPU VRAM by default. On AMD cards with 8GB or less, this fills up fast.',
+                  '',
+                  '**Fix — disable pre-allocation:**',
+                  '```bash',
+                  'export XLA_PYTHON_CLIENT_PREALLOCATE=false',
+                  '```',
+                  '',
+                  '**Or — cap the allocation (e.g. 50% of VRAM):**',
+                  '```bash',
+                  'export XLA_PYTHON_CLIENT_MEM_FRACTION=0.5',
+                  '```',
+                  '',
+                  '**In Python (before import jax):**',
+                  '```python',
+                  'import os',
+                  'os.environ["XLA_PYTHON_CLIENT_PREALLOCATE"] = "false"',
+                  'import jax',
+                  '```',
+                  '',
+                  'For gradient checkpointing on large models: use `jax.checkpoint` to trade compute for memory.',
+                ].join('\n'),
               },
               {
                 keywords: ['slow', 'compile', 'first run', 'seconds', '60 sec', '120 sec', 'too slow', 'compilation'],
                 label: 'slow-compile',
-                response: `## ⚡ Auto-response: Slow First-Run Compilation
-
-**This is expected on AMD.** JAX compiles GPU kernels on the first call — RDNA1 takes 30-90 seconds, RDNA2/3 takes 10-30 seconds.
-
-**Fix — enable compilation cache (persists between runs):**
-\`\`\`bash
-export JAX_COMPILATION_CACHE_DIR=/tmp/jax-cache
-# Or a permanent location:
-export JAX_COMPILATION_CACHE_DIR=$HOME/.cache/jax
-\`\`\`
-
-After the first run, subsequent calls use the cached kernels and are fast.
-
-**Note:** Cache is invalidated when you change ROCm version, JAX version, or GPU. Delete \`$JAX_COMPILATION_CACHE_DIR\` when upgrading.`
+                response: [
+                  '## ⚡ Auto-response: Slow First-Run Compilation',
+                  '',
+                  '**This is expected on AMD.** JAX compiles GPU kernels on the first call — RDNA1 takes 30-90 seconds, RDNA2/3 takes 10-30 seconds.',
+                  '',
+                  '**Fix — enable compilation cache (persists between runs):**',
+                  '```bash',
+                  'export JAX_COMPILATION_CACHE_DIR=/tmp/jax-cache',
+                  '# Or a permanent location:',
+                  'export JAX_COMPILATION_CACHE_DIR=$HOME/.cache/jax',
+                  '```',
+                  '',
+                  'After the first run, subsequent calls use cached kernels and are fast.',
+                  '',
+                  '**Note:** Cache is invalidated when you change ROCm, JAX version, or GPU. Delete the cache directory when upgrading.',
+                ].join('\n'),
               },
               {
                 keywords: ['rocm 5', 'rocm5', '5.x', 'version mismatch', 'jaxlib version', 'upgrade rocm'],
                 label: 'rocm-version',
-                response: `## ⚡ Auto-response: ROCm Version Mismatch
-
-JAX ROCm wheels are **version-locked** — you must match jaxlib to your exact ROCm version.
-
-\`\`\`bash
-# Check your ROCm version
-rocm-smi --version
-
-# Install matching JAX:
-# ROCm 6.0
-pip install jax[rocm] -f https://storage.googleapis.com/jax-releases/rocm/jax_rocm_releases.html
-
-# ROCm 6.1 (recommended)
-pip install "jax[rocm6_1]" -f https://storage.googleapis.com/jax-releases/rocm/jax_rocm_releases.html
-\`\`\`
-
-**Upgrading from ROCm 5.x to 6.x?** See the full migration guide: [docs/rocm-migration.md](docs/rocm-migration.md)`
+                response: [
+                  '## ⚡ Auto-response: ROCm Version Mismatch',
+                  '',
+                  'JAX ROCm wheels are **version-locked** — you must match jaxlib to your exact ROCm version.',
+                  '',
+                  '```bash',
+                  '# Check your ROCm version',
+                  'rocm-smi --version',
+                  '',
+                  '# ROCm 6.1 (recommended)',
+                  'pip install "jax[rocm6_1]" -f https://storage.googleapis.com/jax-releases/rocm/jax_rocm_releases.html',
+                  '',
+                  '# ROCm 6.0',
+                  'pip install "jax[rocm6_0]" -f https://storage.googleapis.com/jax-releases/rocm/jax_rocm_releases.html',
+                  '',
+                  '# ROCm 5.x — consider upgrading to ROCm 6.x for better support',
+                  '```',
+                  '',
+                  'See the [README install section](README.md#installation) for the full version matrix.',
+                ].join('\n'),
               },
               {
-                keywords: ['result', 'test result', 'pass rate', 'submit', 'my gpu', 'rx 6', 'rx 7', 'mi100', 'mi250', 'benchmark'],
+                keywords: ['result', 'benchmark', 'my gpu', 'my card', 'test result', 'submit'],
                 label: 'results-submission',
-                response: `## ✅ Thanks for submitting results!
-
-Please attach your result JSON (found in \`RESULTS/\` after running the suite) and include:
-- GPU model
-- ROCm version (\`rocm-smi --version\`)
-- JAX version (\`python -c "import jax; print(jax.__version__)"\`)
-- OS (native Linux / WSL2 / Windows DirectML)
-
-Your result will be added to [RESULTS/README.md](RESULTS/README.md) to help every AMD user who comes after you.
-
-Run the suite if you haven't yet:
-\`\`\`bash
-python scripts/research_failure_suite.py
-\`\`\``
+                response: [
+                  '## ⚡ Thanks for wanting to share results!',
+                  '',
+                  'We are building a community results database. To submit your GPU results:',
+                  '',
+                  '1. Run the test suite: `python scripts/research_failure_suite.py`',
+                  '2. Copy the output JSON from `RESULTS/` (or create one using the template below)',
+                  '3. Open a PR adding your file to `RESULTS/YOUR_GPU_NAME_rocmVER_DATE.json`',
+                  '',
+                  'See [RESULTS/README.md](RESULTS/README.md) for the format and existing results.',
+                  '',
+                  'Your contribution helps every AMD JAX user with your GPU model!',
+                ].join('\n'),
               },
             ];
 
-            // ── Match issue against patterns ──────────────────────────────
+            // ── Match against patterns ──────────────────────────────────────
             let matched = null;
             for (const p of patterns) {
               if (p.keywords.some(kw => text.includes(kw))) {
@@ -196,48 +209,53 @@ python scripts/research_failure_suite.py
               }
             }
 
-            // ── Default response for unmatched issues ─────────────────────
-            const defaultResponse = `## 👋 Thanks for opening an issue!
+            // ── Default response if no pattern matched ──────────────────────
+            const defaultResponse = [
+              '## ⚡ Auto-response: Common AMD JAX Fixes',
+              '',
+              'Thanks for the report! While the maintainers review your issue, try these common fixes:',
+              '',
+              '**1. bfloat16 NaN (most common on RDNA1):**',
+              "```bash\nexport XLA_FLAGS='--xla_gpu_enable_triton_gemm=false'```",
+              '',
+              '**2. GPU not detected:**',
+              "```bash\nexport JAX_PLATFORMS=gpu```",
+              '',
+              '**3. Out of memory:**',
+              '```bash\nexport XLA_PYTHON_CLIENT_PREALLOCATE=false```',
+              '',
+              '**4. Slow first run:**',
+              '```bash\nexport JAX_COMPILATION_CACHE_DIR=$HOME/.cache/jax```',
+              '',
+              '**5. MIOpen cache errors:**',
+              '```bash\nexport MIOPEN_USER_DB_PATH=/tmp/miopen-cache && mkdir -p /tmp/miopen-cache```',
+              '',
+              'For a complete diagnosis, run:',
+              '```bash\npython scripts/research_failure_suite.py```',
+              '',
+              'And paste the output so we can pinpoint the issue.',
+            ].join('\n');
 
-To help diagnose your problem, please run the research failure suite and attach the output:
-
-\`\`\`bash
-python scripts/research_failure_suite.py --quick
-\`\`\`
-
-This generates a JSON file in \`RESULTS/\` with your system info and test results. Attach it here.
-
-**Common fixes checklist:**
-- [ ] bfloat16 NaN → \`export XLA_FLAGS='--xla_gpu_enable_triton_gemm=false'\`
-- [ ] GPU not detected → check [Path A (DirectML)](README.md#path-a-directml-windows-native) or [Path B (ROCm)](README.md#path-b-rocm-linuxwsl2)
-- [ ] MIOpen error → \`export MIOPEN_USER_DB_PATH=/tmp/miopen-cache\`
-- [ ] Slow first run → \`export JAX_COMPILATION_CACHE_DIR=/tmp/jax-cache\`
-- [ ] OOM → \`export XLA_PYTHON_CLIENT_PREALLOCATE=false\`
-
-See [docs/jax-gotchas.md](docs/jax-gotchas.md) and [docs/troubleshooting.md](docs/troubleshooting.md) for the full reference.`;
-
-            // ── Post the response ─────────────────────────────────────────
-            const responseBody = matched
-              ? matched.response + '\n\n---\n*Auto-response based on issue keywords. A maintainer will follow up.*'
-              : defaultResponse + '\n\n---\n*Auto-response. A maintainer will follow up shortly.*';
-
+            // ── Post comment ────────────────────────────────────────────────
+            const commentBody = matched ? matched.response : defaultResponse;
             await github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo:  context.repo.repo,
-              issue_number: context.payload.issue.number,
-              body: responseBody
+              owner:    context.repo.owner,
+              repo:     context.repo.repo,
+              issue_number: context.issue.number,
+              body:     commentBody,
             });
 
-            // ── Apply label if matched ────────────────────────────────────
-            if (matched && matched.label) {
+            // ── Apply label ─────────────────────────────────────────────────
+            if (matched) {
               try {
                 await github.rest.issues.addLabels({
-                  owner: context.repo.owner,
-                  repo:  context.repo.repo,
-                  issue_number: context.payload.issue.number,
-                  labels: [matched.label]
+                  owner:    context.repo.owner,
+                  repo:     context.repo.repo,
+                  issue_number: context.issue.number,
+                  labels:   [matched.label],
                 });
               } catch (e) {
-                // Labels may not exist yet — that's fine
+                // Label may not exist yet — ignore
+                console.log('Label not found, skipping:', matched.label);
               }
             }

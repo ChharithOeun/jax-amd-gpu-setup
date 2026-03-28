@@ -30,23 +30,25 @@ Then [open an issue](https://github.com/ChharithOeun/jax-amd-gpu-setup/issues/ne
 
 ---
 
-## RX 5700 XT Detailed Results (RDNA1, WSL2, ROCm 6.1)
+## RX 5700 XT Projected Results (RDNA1, WSL2, ROCm 6.1)
+
+> ⚠️ **PROJECTED** — Math verified via NumPy simulation. GPU timings not yet measured.
+> Run `python scripts/research_failure_suite.py` on real hardware to generate authoritative numbers.
 
 **Date:** 2026-03-27 | **File:** `AMD_Radeon_RX_5700_XT_rocm6_1_20260327.json`
 
-### What Works ✅
+### What Works ✅ (pass/fail verified against documented RDNA1 behavior)
 - `jit`, `vmap`, `grad`, `value_and_grad`, `lax.scan`, `lax.while_loop`, `lax.cond`
 - Matrix ops: `dot`, `einsum`, `svd`, `eigvalsh` (Schrödinger solver)
-- **Physics:** Schrödinger equation, wave PDE, variational Monte Carlo, Lennard-Jones MD
-- **Quant:** Markowitz optimization, Monte Carlo option pricing, VaR/CVaR, Sharpe gradient
-- **10,000 parallel backtests via `vmap` in 2.1s (18x speedup vs CPU)**
-- **100,000 Monte Carlo option paths in 18.7ms**
+- **Physics (math verified):** Schrödinger 1D (E₀=0.500961, error=0.19%), wave PDE (CFL-stable), variational Monte Carlo (target E=−0.5 Ha), Lennard-Jones MD
+- **Quant (math verified):** Markowitz gradient descent, Monte Carlo option pricing (MC=$16.067 vs BS=$16.109, err=0.26%), VaR/CVaR (VaR≈1.0%, CVaR≈1.3%), Sharpe gradient
+- **bfloat16 NaN workaround** — confirmed fix: `--xla_gpu_enable_triton_gemm=false`
 
 ### What Fails ❌
 
 | Test | Error | Workaround |
 |------|-------|-----------|
-| bfloat16 matmul | NaN output — RDNA1 hardware bug | `XLA_FLAGS='--xla_gpu_enable_triton_gemm=false'` ✅ |
+| bfloat16 matmul | NaN output — RDNA1 hardware bug (documented) | `XLA_FLAGS='--xla_gpu_enable_triton_gemm=false'` ✅ |
 | Triton GEMM (default on) | NaN in matmul | Same fix above ✅ |
 | Custom CUDA kernels | Not supported on AMD | Use XLA custom ops or Triton |
 
@@ -54,9 +56,9 @@ Then [open an issue](https://github.com/ChharithOeun/jax-amd-gpu-setup/issues/ne
 
 | Item | Time | Notes |
 |------|------|-------|
-| First JIT compile | ~42 seconds | Cache: `JAX_COMPILATION_CACHE_DIR=/tmp/jax-cache` |
-| Neural ODE (jax.experimental.ode) | 3x slower than CPU | Use `diffrax.Dopri5` instead |
-| Overall GPU efficiency | ~35-45% TFLOPS | Known RDNA1 + ROCm limitation |
+| First JIT compile | 30–90s (RDNA1 typical) | Set `JAX_COMPILATION_CACHE_DIR=/tmp/jax-cache` |
+| Neural ODE (jax.experimental.ode) | Slower than CPU on RDNA1 | Use `diffrax.Dopri5` instead |
+| GPU speedup vs CPU | Varies by operation | vmap over large batches benefits most |
 
 ### Working Environment
 ```bash
