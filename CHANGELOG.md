@@ -11,13 +11,11 @@ Auto-updated by `.github/workflows/changelog.yml` on every push to `main`.
 
 ---
 
-## [Unreleased]
+## [Unreleased] — updated 2026-03-29
 
-_Next planned:_
-- Real measured results from RX 5700 XT hardware run (replace projected JSON)
-- RDNA2 / RDNA3 community result submissions
+### Changed
+- Add neon banner (`fda0469`)
 
----
 
 ## [0.4.0] — 2026-03-27
 
