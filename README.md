@@ -1,3 +1,5 @@
+<p align="center"><img src="assets/banner.png" alt="JAX AMD GPU Setup Banner" width="100%"></p>
+
 # jax-amd-gpu-setup
 
 **The missing guide for running JAX on AMD GPUs** — Windows (DirectML) and Linux/WSL2 (ROCm).
