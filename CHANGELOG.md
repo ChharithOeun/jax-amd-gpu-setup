@@ -13,8 +13,8 @@ Auto-updated by `.github/workflows/changelog.yml` on every push to `main`.
 
 ## [Unreleased] — updated 2026-04-19
 
-### Fixed
-- remove non-ASCII em-dashes from issue-responder.yml (workflow file parse error) (`d0ad1ef`)
+### Changed
+- add Buy Me A Coffee link to README (`443aa9f`)
 
 
 ## [0.4.0] — 2026-03-27
