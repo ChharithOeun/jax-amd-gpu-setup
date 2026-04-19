@@ -335,3 +335,11 @@ Same pattern as `torch-amd-setup`:
 3. Open a PR with the error added to the troubleshooting table
 
 The goal is a single source of truth that AMD users can actually trust.
+
+---
+
+## Support This Work
+
+If this saved you time, consider buying me a coffee:
+
+[![Buy Me A Coffee](https://img.shields.io/badge/Buy%20Me%20A%20Coffee-chharcop-yellow)](https://buymeacoffee.com/chharcop)
