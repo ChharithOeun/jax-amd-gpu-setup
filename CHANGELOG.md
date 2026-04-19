@@ -11,10 +11,10 @@ Auto-updated by `.github/workflows/changelog.yml` on every push to `main`.
 
 ---
 
-## [Unreleased] — updated 2026-03-29
+## [Unreleased] — updated 2026-04-19
 
-### Changed
-- Add neon banner (`fda0469`)
+### Fixed
+- remove non-ASCII em-dashes from issue-responder.yml (workflow file parse error) (`d0ad1ef`)
 
 
 ## [0.4.0] — 2026-03-27
