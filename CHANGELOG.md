@@ -13,8 +13,8 @@ Auto-updated by `.github/workflows/changelog.yml` on every push to `main`.
 
 ## [Unreleased] — updated 2026-04-19
 
-### Changed
-- add Buy Me A Coffee link to README (`443aa9f`)
+### Fixed
+- correct Buy Me a Coffee link to buymeacoffee.com/chharith (`472bbfe`)
 
 
 ## [0.4.0] — 2026-03-27
