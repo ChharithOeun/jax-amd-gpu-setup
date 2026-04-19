@@ -22,7 +22,7 @@ jobs:
             const body  = (context.payload.issue.body || '').toLowerCase();
             const text  = title + ' ' + body;
 
-            // ── Known error pattern matching ──────────────────────────────
+            // ------ Known error pattern matching ------------------------------------------------------------------------------------------
             // NOTE: Multi-line response strings are built as arrays to avoid
             // YAML block-scalar indentation conflicts with template literals.
 
@@ -31,11 +31,11 @@ jobs:
                 keywords: ['nan', 'nan output', 'bfloat16', 'triton', 'matmul nan'],
                 label: 'amd-nan-bug',
                 response: [
-                  '## ⚡ Auto-response: bfloat16 / Triton GEMM NaN',
+                  '## --- Auto-response: bfloat16 / Triton GEMM NaN',
                   '',
                   'This is a **known issue on RDNA1 GPUs** (RX 5500/5600/5700 series) and some RDNA2 cards.',
                   '',
-                  '**Fix — disable Triton GEMM before importing JAX:**',
+                  '**Fix -- disable Triton GEMM before importing JAX:**',
                   '```bash',
                   "export XLA_FLAGS='--xla_gpu_enable_triton_gemm=false'",
                   'python your_script.py',
@@ -59,9 +59,9 @@ jobs:
                 keywords: ['miopen', 'invalid argument', 'kernel', 'missing', 'algorithm'],
                 label: 'miopen-cache',
                 response: [
-                  '## ⚡ Auto-response: MIOpen Error',
+                  '## --- Auto-response: MIOpen Error',
                   '',
-                  'This is a **MIOpen kernel cache issue** — usually caused by a ROCm version change or corrupt cache.',
+                  'This is a **MIOpen kernel cache issue** -- usually caused by a ROCm version change or corrupt cache.',
                   '',
                   '**Fix:**',
                   '```bash',
@@ -81,9 +81,9 @@ jobs:
                 keywords: ['no gpu', 'gpu not found', 'no gpu backend', 'cpu backend', 'not using gpu', 'falling back'],
                 label: 'gpu-not-detected',
                 response: [
-                  '## ⚡ Auto-response: GPU Not Detected',
+                  '## --- Auto-response: GPU Not Detected',
                   '',
-                  '**Step 1 — Check which path you are on:**',
+                  '**Step 1 -- Check which path you are on:**',
                   '- Windows: Did you install `jax-directml`?',
                   '- Linux/WSL2: Did you install `jax[rocm6_1]`?',
                   '',
@@ -106,23 +106,23 @@ jobs:
                   'python -c "import jax; print(jax.devices())"',
                   '```',
                   '',
-                  '**WSL2-specific:** Install the AMD GPU driver on the **Windows side** (not inside WSL2). Download from amd.com → Support → your GPU → Windows 11 → WSL2.',
+                  '**WSL2-specific:** Install the AMD GPU driver on the **Windows side** (not inside WSL2). Download from amd.com --- Support --- your GPU --- Windows 11 --- WSL2.',
                 ].join('\n'),
               },
               {
                 keywords: ['oom', 'out of memory', 'allocat', 'vram', 'memory', 'preallocat'],
                 label: 'oom',
                 response: [
-                  '## ⚡ Auto-response: Out of Memory / VRAM Exhausted',
+                  '## --- Auto-response: Out of Memory / VRAM Exhausted',
                   '',
                   'JAX pre-allocates 90% of GPU VRAM by default. On AMD cards with 8GB or less, this fills up fast.',
                   '',
-                  '**Fix — disable pre-allocation:**',
+                  '**Fix -- disable pre-allocation:**',
                   '```bash',
                   'export XLA_PYTHON_CLIENT_PREALLOCATE=false',
                   '```',
                   '',
-                  '**Or — cap the allocation (e.g. 50% of VRAM):**',
+                  '**Or -- cap the allocation (e.g. 50% of VRAM):**',
                   '```bash',
                   'export XLA_PYTHON_CLIENT_MEM_FRACTION=0.5',
                   '```',
@@ -141,11 +141,11 @@ jobs:
                 keywords: ['slow', 'compile', 'first run', 'seconds', '60 sec', '120 sec', 'too slow', 'compilation'],
                 label: 'slow-compile',
                 response: [
-                  '## ⚡ Auto-response: Slow First-Run Compilation',
+                  '## --- Auto-response: Slow First-Run Compilation',
                   '',
-                  '**This is expected on AMD.** JAX compiles GPU kernels on the first call — RDNA1 takes 30-90 seconds, RDNA2/3 takes 10-30 seconds.',
+                  '**This is expected on AMD.** JAX compiles GPU kernels on the first call -- RDNA1 takes 30-90 seconds, RDNA2/3 takes 10-30 seconds.',
                   '',
-                  '**Fix — enable compilation cache (persists between runs):**',
+                  '**Fix -- enable compilation cache (persists between runs):**',
                   '```bash',
                   'export JAX_COMPILATION_CACHE_DIR=/tmp/jax-cache',
                   '# Or a permanent location:',
@@ -161,9 +161,9 @@ jobs:
                 keywords: ['rocm 5', 'rocm5', '5.x', 'version mismatch', 'jaxlib version', 'upgrade rocm'],
                 label: 'rocm-version',
                 response: [
-                  '## ⚡ Auto-response: ROCm Version Mismatch',
+                  '## --- Auto-response: ROCm Version Mismatch',
                   '',
-                  'JAX ROCm wheels are **version-locked** — you must match jaxlib to your exact ROCm version.',
+                  'JAX ROCm wheels are **version-locked** -- you must match jaxlib to your exact ROCm version.',
                   '',
                   '```bash',
                   '# Check your ROCm version',
@@ -175,7 +175,7 @@ jobs:
                   '# ROCm 6.0',
                   'pip install "jax[rocm6_0]" -f https://storage.googleapis.com/jax-releases/rocm/jax_rocm_releases.html',
                   '',
-                  '# ROCm 5.x — consider upgrading to ROCm 6.x for better support',
+                  '# ROCm 5.x -- consider upgrading to ROCm 6.x for better support',
                   '```',
                   '',
                   'See the [README install section](README.md#installation) for the full version matrix.',
@@ -185,7 +185,7 @@ jobs:
                 keywords: ['result', 'benchmark', 'my gpu', 'my card', 'test result', 'submit'],
                 label: 'results-submission',
                 response: [
-                  '## ⚡ Thanks for wanting to share results!',
+                  '## --- Thanks for wanting to share results!',
                   '',
                   'We are building a community results database. To submit your GPU results:',
                   '',
@@ -200,7 +200,7 @@ jobs:
               },
             ];
 
-            // ── Match against patterns ──────────────────────────────────────
+            // ------ Match against patterns ------------------------------------------------------------------------------------------------------------------
             let matched = null;
             for (const p of patterns) {
               if (p.keywords.some(kw => text.includes(kw))) {
@@ -209,9 +209,9 @@ jobs:
               }
             }
 
-            // ── Default response if no pattern matched ──────────────────────
+            // ------ Default response if no pattern matched ------------------------------------------------------------------
             const defaultResponse = [
-              '## ⚡ Auto-response: Common AMD JAX Fixes',
+              '## --- Auto-response: Common AMD JAX Fixes',
               '',
               'Thanks for the report! While the maintainers review your issue, try these common fixes:',
               '',
@@ -236,7 +236,7 @@ jobs:
               'And paste the output so we can pinpoint the issue.',
             ].join('\n');
 
-            // ── Post comment ────────────────────────────────────────────────
+            // ------ Post comment ------------------------------------------------------------------------------------------------------------------------------------------------
             const commentBody = matched ? matched.response : defaultResponse;
             await github.rest.issues.createComment({
               owner:    context.repo.owner,
@@ -245,7 +245,7 @@ jobs:
               body:     commentBody,
             });
 
-            // ── Apply label ─────────────────────────────────────────────────
+            // ------ Apply label ---------------------------------------------------------------------------------------------------------------------------------------------------
             if (matched) {
               try {
                 await github.rest.issues.addLabels({
@@ -255,7 +255,7 @@ jobs:
                   labels:   [matched.label],
                 });
               } catch (e) {
-                // Label may not exist yet — ignore
+                // Label may not exist yet -- ignore
                 console.log('Label not found, skipping:', matched.label);
               }
             }
